@@ -206,6 +206,9 @@ displays = [
   , Display(hostname = "apollo"
       , transformation = avango.gua.make_trans_mat(0.0, 1.2, 0.0)
   )
+  , Display(hostname = "orestes"
+      , transformation = avango.gua.make_trans_mat(0.0, 1.2, 0.0)
+  )
 ]
 
 ## @var INTELLIGENT_SHUTTER_SWITCHING

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE setup SYSTEM "config.dtd">
+
+<setup>
+
+  <global>
+
+    <groundfollowing>
+      <activated>True</activated>
+      <raystartheight>0.75</raystartheight>
+    </groundfollowing>
+
+    <animatecoupling>True</animatecoupling>
+    <movementtraces>True</movementtraces>
+
+  </global>
+
+  <device>
+
+    <type>Spacemouse</type>
+
+    <inputsensor>device-spacemouse</inputsensor>
+
+    <display>orestes_display</display>
+
+    <avatartype>joseph</avatartype>
+
+    <transmitteroffset>
+      <x>0.0</x>
+      <y>0.043</y>
+      <z>1.6</z>
+    </transmitteroffset>
+
+    <notrackingposition>
+      <x>0.0</x>
+      <y>1.2</y>
+      <z>0.6</z>
+    </notrackingposition>
+
+    <platformpos>
+      <x>-2.0</x>
+      <y>0.0</y>
+      <z>12.0</z>
+    </platformpos>
+
+    <platformrot>
+      <yaw>0.0</yaw>
+    </platformrot>
+
+  </device>
+        
+
+  <!-- First User -->
+  
+  <user>
+
+    <vip>False</vip>
+
+    <startplatform>0</startplatform>
+
+    <warnings>False</warnings>
+
+  </user>
+
+</setup>
