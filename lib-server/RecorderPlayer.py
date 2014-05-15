@@ -9,6 +9,9 @@ import avango.gua
 import avango.script
 from avango.script import field_has_changed
 
+# import framework libraries
+from ConsoleIO import *
+
 # import python libraries
 import time
 import math
@@ -70,7 +73,7 @@ class RecorderPlayer(avango.script.Script):
     if self.sf_save_key.value == True: # key pressed
       self.save_recording()
 
-      print "SAVING", self.recording_index
+      print_message("Saving recording " + str(self.recording_index))
 
 
   def recorder_callback(self): # evaluated every frame when active
@@ -95,7 +98,6 @@ class RecorderPlayer(avango.script.Script):
   # functions
   def play_key(self):
 
-    #print "player", len(self.recording_list), self.play_index
     if len(self.recording_list) > 0:
 
       if self.player_trigger.Active.value == True:
@@ -121,7 +123,7 @@ class RecorderPlayer(avango.script.Script):
 
       self.reset_player()
 
-      print "enable ", "recording ", self.recording_index
+      print_message("Switch to recording " + str(self.recording_index))
 
 
   def prior_recording(self):
@@ -140,7 +142,7 @@ class RecorderPlayer(avango.script.Script):
 
       self.reset_player()
 
-      print "enable ", "recording ", self.recording_index
+      print_message("Switch to recording " + str(self.recording_index))
 
 
   def load_recorded_paths(self):
@@ -168,7 +170,7 @@ class RecorderPlayer(avango.script.Script):
       _file.close()
 
     except IOError:
-      print "error while loading scene description file"
+      print_error("Error while loading path description file.", True)
 
     else: # file succesfully loaded
 
@@ -190,7 +192,7 @@ class RecorderPlayer(avango.script.Script):
 
   def start_recorder(self):
 
-    print "RECORDING"
+    print_message("Start recording")
 
     self.stop_player()
 
@@ -204,7 +206,7 @@ class RecorderPlayer(avango.script.Script):
   def stop_recorder(self):
 
     if self.recorder_trigger.Active.value == True:
-      print "STOP RECORDING", len(self.recording_list)
+      print_message("Stop recording of " + str(len(self.recording_list)) + " control points.")
 
       self.recorder_trigger.Active.value = False # deactivate recorder callback
 
@@ -241,7 +243,7 @@ class RecorderPlayer(avango.script.Script):
 
   def start_player(self):
 
-    print "START PLAYING"
+    print_message("Start playing")
 
     self.play_index = 0
     self.play_reset_flag = False
@@ -254,7 +256,7 @@ class RecorderPlayer(avango.script.Script):
   def stop_player(self):
 
     if self.player_trigger.Active.value == True:
-      print "STOP_PLAYING"
+      print_message("Stop playing")
 
       self.play_index = None
 
@@ -264,7 +266,7 @@ class RecorderPlayer(avango.script.Script):
   def reset_player(self):
 
     if len(self.recording_list) > 0:
-      print "RESET PLAYER"
+      print_message("Reset player")
       self.play_index = 0
 
       _values 	= self.recording_list[0]
@@ -289,20 +291,17 @@ class RecorderPlayer(avango.script.Script):
 
       else:
         _time_step1 = self.recording_list[self.play_index][0]
-        #print "playing", _time_step1
 
         if TIME_STEP >= _time_step1:
 
           for _index in range(self.play_index, len(self.recording_list)):
             _time_step2 = self.recording_list[_index+1][0]
-            #print "next timestep", _time_step2
 
             if TIME_STEP <= _time_step2:
               self.play_index = _index
 
               _factor = (TIME_STEP - _time_step1) / (_time_step2 - _time_step1)
               _factor = max(0.0,min(_factor,1.0))
-              #print "FACTOR", _factor
               self.interpolate_between_frames(_factor) # interpolate position and orientation and scale
 
               break
@@ -324,7 +323,6 @@ class RecorderPlayer(avango.script.Script):
     _new_mat = avango.gua.make_trans_mat(_new_pos) * \
                 avango.gua.make_rot_mat(_new_quat.get_angle(), _new_quat.get_axis().x, _new_quat.get_axis().y, _new_quat.get_axis().z)
 
-    #print _new_mat.get_translate()
     self.SCENEGRAPH_NODE.Transform.value = _new_mat
 
 
@@ -342,10 +340,7 @@ class AnimationManager(avango.script.Script):
 
   # constructor
   def my_constructor(self, SCENEGRAPH_NODE_LIST):
-
-    # variables
-    self.enable_flag = True
-    
+ 
     # sensor
     self.keyboard_sensor = avango.daemon.nodes.DeviceSensor(DeviceService = avango.daemon.DeviceService())
     self.keyboard_sensor.Station.value = "device-keyboard0"
@@ -369,22 +364,9 @@ class AnimationManager(avango.script.Script):
   @field_has_changed(sf_play)
   def sf_play_changed(self):
 
-    print "play key", self.sf_play.value
-
     if self.sf_play.value == True: # button pressed
       
       self.play_key()
-
-
-  @field_has_changed(sf_record)
-  def sf_record_changed(self):
-
-    #print "record key", self.sf_record.value
-
-    if self.sf_record.value == True: # button pressed
-
-      if self.enable_flag == False:
-        self.enable_flag = True
 
   @field_has_changed(sf_next)
   def sf_next_changed(self):
@@ -392,8 +374,7 @@ class AnimationManager(avango.script.Script):
     if self.sf_next.value == True: # button pressed
 
       self.path_recorder_player.next_recording()
-
-      self.enable_flag = True
+      self.play_key()
 
   @field_has_changed(sf_prior)
   def sf_prior_changed(self):
@@ -401,8 +382,7 @@ class AnimationManager(avango.script.Script):
     if self.sf_prior.value == True: # button pressed
 
       self.path_recorder_player.prior_recording()
-
-      self.enable_flag = True
+      self.play_key()
 
 
   # functions
@@ -410,14 +390,6 @@ class AnimationManager(avango.script.Script):
 
     self.path_recorder_player.play_key()
 
-    if self.path_recorder_player.player_trigger.Active.value == True:
-      self.enable_flag = False
-
-    else:
-      self.enable_flag = True
-
   ## Evaluated every frame.
   def evaluate(self):
-
-    if self.sf_play.value == True:
-      self.sf_play_changed()
+    pass
