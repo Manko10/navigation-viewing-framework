@@ -29,10 +29,11 @@ class RecorderPlayer(avango.script.Script):
     self.super(RecorderPlayer).__init__()
 
   # constructor
-  def my_constructor(self, SCENEGRAPH_NODE, SF_RECORD_KEY, SF_SAVE_KEY):
+  def my_constructor(self, SCENEGRAPH_NODE, SF_RECORD_KEY, SF_SAVE_KEY, NAVIGATION = None):
 
     # references
     self.SCENEGRAPH_NODE = SCENEGRAPH_NODE
+    self.NAVIGATION = NAVIGATION
 
     # variables
     self.recordings_list = []
@@ -267,6 +268,7 @@ class RecorderPlayer(avango.script.Script):
 
     if len(self.recording_list) > 0:
       print_message("Reset player")
+
       self.play_index = 0
 
       _values 	= self.recording_list[0]
@@ -304,6 +306,9 @@ class RecorderPlayer(avango.script.Script):
               _factor = max(0.0,min(_factor,1.0))
               self.interpolate_between_frames(_factor) # interpolate position and orientation and scale
 
+              if self.NAVIGATION != None and TIME_STEP < 0.1:
+                self.NAVIGATION.trace.clear(self.NAVIGATION.get_current_world_pos())
+
               break
 
 
@@ -325,6 +330,9 @@ class RecorderPlayer(avango.script.Script):
 
     self.SCENEGRAPH_NODE.Transform.value = _new_mat
 
+    if self.NAVIGATION != None:
+      self.NAVIGATION.inputmapping.set_abs_mat(_new_mat)
+
 
 class AnimationManager(avango.script.Script):
 
@@ -339,7 +347,7 @@ class AnimationManager(avango.script.Script):
     self.super(AnimationManager).__init__()
 
   # constructor
-  def my_constructor(self, SCENEGRAPH_NODE_LIST):
+  def my_constructor(self, SCENEGRAPH_NODE_LIST, NAVIGATION_LIST):
  
     # sensor
     self.keyboard_sensor = avango.daemon.nodes.DeviceSensor(DeviceService = avango.daemon.DeviceService())
@@ -356,7 +364,7 @@ class AnimationManager(avango.script.Script):
     self.sf_save.connect_from(self.keyboard_sensor.Button25) # F7
 
     self.path_recorder_player = RecorderPlayer()
-    self.path_recorder_player.my_constructor(SCENEGRAPH_NODE_LIST[0], self.sf_record, self.sf_save)
+    self.path_recorder_player.my_constructor(SCENEGRAPH_NODE_LIST[0], self.sf_record, self.sf_save, NAVIGATION_LIST[0])
 
     self.always_evaluate(True)
 

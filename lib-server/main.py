@@ -67,7 +67,7 @@ def start():
 
   # initialize animation manager
   animation_manager = AnimationManager()
-  animation_manager.my_constructor([ graph["/net/platform_0"] ])
+  animation_manager.my_constructor([ graph["/net/platform_0"] ], [application_manager.navigation_list[0]])
 
   # distribute all nodes in the scenegraph
   distribute_all_nodes(nettrans, nettrans)
