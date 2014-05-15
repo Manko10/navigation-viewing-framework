@@ -345,20 +345,9 @@ class AnimationManager(avango.script.Script):
     self.super(AnimationManager).__init__()
 
     # variables
-    self.input_list = []
-    self.input_length = 15
-
     self.enable_flag = True
-    self.auto_animation_flag = False
-    self.roll_removal_flag = True
-
-    self.lf_time = time.time()
-    self.global_scale = 1.0 # (inside/outside plane)
     
-    # parameters
-    self.auto_animation_threshold = 10.0 # in sec
-    self.key_velocity = 0.04
-
+    # sensor
     self.keyboard_sensor = avango.daemon.nodes.DeviceSensor(DeviceService = avango.daemon.DeviceService())
     self.keyboard_sensor.Station.value = "device-keyboard0"
         
@@ -398,7 +387,6 @@ class AnimationManager(avango.script.Script):
       if self.enable_flag == False:
         self.enable_flag = True
 
-
   @field_has_changed(sf_next)
   def sf_next_changed(self):
 
@@ -407,7 +395,6 @@ class AnimationManager(avango.script.Script):
       self.path_recorder_player.next_recording()
 
       self.enable_flag = True
-
 
   @field_has_changed(sf_prior)
   def sf_prior_changed(self):
@@ -419,40 +406,7 @@ class AnimationManager(avango.script.Script):
       self.enable_flag = True
 
 
-  def evaluate(self):
-    pass
-
-
-  def filter_channel(self, VALUE, OFFSET, MIN, MAX, NEG_THRESHOLD, POS_THRESHOLD):
-
-    VALUE = VALUE - OFFSET
-    MIN = MIN - OFFSET
-    MAX = MAX - OFFSET
-
-    #print "+", VALUE, MAX, POS_THRESHOLD
-    #print "-", VALUE, MIN, NEG_THRESHOLD
-
-    if VALUE > 0:
-      _pos = MAX * POS_THRESHOLD * 0.01
-
-      if VALUE > _pos: # above positive threshold
-        VALUE = min( (VALUE - _pos) / (MAX - _pos), 1.0) # normalize interval
-
-      else: # beneath positive threshold
-        VALUE = 0
-
-    elif VALUE < 0:
-      _neg = MIN * NEG_THRESHOLD * 0.01
-
-      if VALUE < _neg:
-        VALUE = max( (VALUE - _neg) / abs(MIN - _neg), -1.0)
-
-      else: # above negative threshold
-        VALUE = 0
-
-    return VALUE
-
-
+  # functions
   def play_key(self):
 
     self.path_recorder_player.play_key()
@@ -462,40 +416,9 @@ class AnimationManager(avango.script.Script):
 
     else:
       self.enable_flag = True
-      
-  
-  def get_euler_angles(self, MATRIX):
 
-    quat = MATRIX.get_rotate()
-    qx = quat.x
-    qy = quat.y
-    qz = quat.z
-    qw = quat.w
-    
-    sqx = qx * qx
-    sqy = qy * qy
-    sqz = qz * qz
-    sqw = qw * qw
-    
-    unit = sqx + sqy + sqz + sqw # if normalised is one, otherwise is correction factor
-    test = (qx * qy) + (qz * qw)
-    
-    if test > (0.49999 * unit): # singularity at north pole
-      head = 2.0 * math.atan2(qx,qw)
-      roll = math.pi/2.0
-      pitch = 0.0
-      
-    elif test < (-0.49999 * unit): # singularity at south pole
-      head = -2.0 * math.atan2(qx,qw)
-      roll = math.pi/-2.0
-      pitch = 0.0
-    
-    else:
-      head = math.atan2(2.0 * qy * qw - 2.0 * qx * qz, 1.0 - 2.0 * sqy - 2.0 * sqz)
-      roll = math.asin(2.0 * test)
-      pitch = math.atan2(2.0 * qx * qw - 2.0 * qy * qz, 1.0 - 2.0 * sqx - 2.0 * sqz)
-      
-    if head < 0.0:
-      head += 2.0 * math.pi
-    
-    return [head, pitch, roll]
+  ## Evaluated every frame.
+  def evaluate(self):
+
+    if self.sf_play.value == True:
+      self.sf_play_changed()
