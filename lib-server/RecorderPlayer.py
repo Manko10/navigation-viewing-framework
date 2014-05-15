@@ -40,7 +40,7 @@ class RecorderPlayer(avango.script.Script):
     self.recordings_list = []
     self.recording_list = []
     self.recorder_start_time = None
-    self.last_keyframe_time = None
+    self.in_keyframe_recording = False
     self.player_start_time = None
     self.play_index = None
     self.play_reset_flag = False
@@ -82,24 +82,22 @@ class RecorderPlayer(avango.script.Script):
 
       print_message("Saving recording " + str(self.recording_index))
 
+  @field_has_changed(sf_trigger_key)
+  def sf_trigger_key_changed(self):
+
+    if self.sf_trigger_key.value == True and \
+       self.in_keyframe_recording:
+      
+      print "Capture keyframe"
+      _time_step = time.time() - self.recorder_start_time
+      self.record_parameters(_time_step)
+
 
   def recorder_callback(self): # evaluated every frame when active
 
     if self.record_mode == "ALL_FRAMES":
       _time_step = time.time() - self.recorder_start_time
       self.record_parameters(_time_step)
-
-
-    elif self.record_mode == "KEYFRAMES" and \
-         self.sf_trigger_key.value == True and \
-         time.time() - self.last_keyframe_time > 2.0:
-      
-      print "Capture keyframe"
-      _time_step = time.time() - self.recorder_start_time
-      self.record_parameters(_time_step)
-      self.last_keyframe_time = time.time()
-
-
 
   def player_callback(self): # evaluated every frame when active
 
@@ -222,6 +220,7 @@ class RecorderPlayer(avango.script.Script):
     if self.record_mode == "KEYFRAMES":
       _time_step = time.time() - self.recorder_start_time
       self.record_parameters(_time_step)
+      self.in_keyframe_recording = True
 
     self.recorder_trigger.Active.value = True # activate recorder callback
 
@@ -229,12 +228,18 @@ class RecorderPlayer(avango.script.Script):
   def stop_recorder(self):
 
     if self.recorder_trigger.Active.value == True:
+
+      if self.record_mode == "KEYFRAMES":
+        _time_step = time.time() - self.recorder_start_time
+        self.record_parameters(_time_step)
+        self.in_keyframe_recording = True
+
       print_message("Stop recording of " + str(len(self.recording_list)) + " control points.")
 
       self.recorder_trigger.Active.value = False # deactivate recorder callback
 
       self.recorder_start_time = None
-      self.last_keyframe_time = None
+      self.in_keyframe_recording = False
 
 
   def save_recording(self):
@@ -323,6 +328,7 @@ class RecorderPlayer(avango.script.Script):
 
           for _index in range(self.play_index, len(self.recording_list)):
             _time_step2 = self.recording_list[_index+1][0]
+            _time_step1 = self.recording_list[_index][0]
 
             if TIME_STEP <= _time_step2:
               self.play_index = _index
