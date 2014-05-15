@@ -297,7 +297,6 @@ def init_keyboard():
     keyboard.station = avango.daemon.Station('device-keyboard' + str(i))
     keyboard.device = "/dev/input/by-id/" + name
 
-
     keyboard.buttons[0] = "EV_KEY::KEY_Q"
     keyboard.buttons[1] = "EV_KEY::KEY_W"
     keyboard.buttons[2] = "EV_KEY::KEY_E"
@@ -331,7 +330,7 @@ def init_keyboard():
     keyboard.buttons[29] = "EV_KEY::KEY_6"
 
     keyboard.buttons[30] = "EV_KEY::KEY_UP"
-    keyboard.buttons[31] = "EV_KEY::KEY_DOWN"
+    keyboard.buttons[31] = "EV_KEY::KEY_DOWN"  
 
     device_list.append(keyboard)
 

@@ -49,7 +49,7 @@ class Platform(avango.script.Script):
 
     ## @var start_clients
     # Debug flag saying if client processes should be started.
-    self.start_clients = True
+    self.start_clients = False
 
     ## @var start_time
     # Time when a decoupling notifier was displayed.

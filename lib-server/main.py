@@ -10,6 +10,7 @@ import avango.gua
 # import framework libraries
 from SceneManager import *
 from ApplicationManager import *
+from RecorderPlayer import *
 
 # import python libraries
 import sys
@@ -63,6 +64,10 @@ def start():
 
   # initialize scene
   scene_manager = SceneManager(loader, nettrans)
+
+  # initialize animation manager
+  animation_manager = AnimationManager()
+  animation_manager.my_constructor([ graph["/net/platform_0"] ])
 
   # distribute all nodes in the scenegraph
   distribute_all_nodes(nettrans, nettrans)
