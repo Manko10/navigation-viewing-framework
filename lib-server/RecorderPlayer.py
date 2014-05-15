@@ -47,11 +47,11 @@ class RecorderPlayer(avango.script.Script):
     self.play_reset_flag = False
     self.recording_index = None
 
-    self.record_mode = "ALL_FRAMES"
-    #self.record_mode = "KEYFRAMES"
+    #self.record_mode = "ALL_FRAMES"
+    self.record_mode = "KEYFRAMES"
 
-    self.play_mode = "CONTINUOUS"
-    #self.play_mode = "DISCRETE"
+    #self.play_mode = "CONTINUOUS"
+    self.play_mode = "DISCRETE"
 
     # init frame callbacks
     self.recorder_trigger = avango.script.nodes.Update(Callback = self.recorder_callback, Active = False)
@@ -342,9 +342,11 @@ class RecorderPlayer(avango.script.Script):
           
           _pos = _next_step[1]
           _quat = _next_step[2]
+          _scale = _next_step[3]
 
           _new_mat = avango.gua.make_trans_mat(_pos) * \
-                  avango.gua.make_rot_mat(_quat.get_angle(), _quat.get_axis().x, _quat.get_axis().y, _quat.get_axis().z)
+                  avango.gua.make_rot_mat(_quat.get_angle(), _quat.get_axis().x, _quat.get_axis().y, _quat.get_axis().z) * \
+                  avango.gua.make_scale_mat(_scale)
 
           self.SCENEGRAPH_NODE.Transform.value = _new_mat
 
