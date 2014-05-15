@@ -23,13 +23,14 @@ class RecorderPlayer(avango.script.Script):
   # input fields
   sf_record_key = avango.SFBool()
   sf_save_key = avango.SFBool()
+  sf_trigger_key = avango.SFBool()
 
   # constructor
   def __init__(self):
     self.super(RecorderPlayer).__init__()
 
   # constructor
-  def my_constructor(self, SCENEGRAPH_NODE, SF_RECORD_KEY, SF_SAVE_KEY, NAVIGATION = None):
+  def my_constructor(self, SCENEGRAPH_NODE, SF_RECORD_KEY, SF_SAVE_KEY, SF_TRIGGER_KEY, NAVIGATION = None):
 
     # references
     self.SCENEGRAPH_NODE = SCENEGRAPH_NODE
@@ -39,10 +40,14 @@ class RecorderPlayer(avango.script.Script):
     self.recordings_list = []
     self.recording_list = []
     self.recorder_start_time = None
+    self.last_keyframe_time = None
     self.player_start_time = None
     self.play_index = None
     self.play_reset_flag = False
     self.recording_index = None
+
+    #self.record_mode = "ALL_FRAMES"
+    self.record_mode = "KEYFRAMES"
 
     # init frame callbacks
     self.recorder_trigger = avango.script.nodes.Update(Callback = self.recorder_callback, Active = False)
@@ -53,6 +58,7 @@ class RecorderPlayer(avango.script.Script):
     # init field connections
     self.sf_record_key.connect_from(SF_RECORD_KEY)
     self.sf_save_key.connect_from(SF_SAVE_KEY)
+    self.sf_trigger_key.connect_from(SF_TRIGGER_KEY)
 
 
   # callbacks
@@ -79,9 +85,20 @@ class RecorderPlayer(avango.script.Script):
 
   def recorder_callback(self): # evaluated every frame when active
 
-    _time_step = time.time() - self.recorder_start_time
+    if self.record_mode == "ALL_FRAMES":
+      _time_step = time.time() - self.recorder_start_time
+      self.record_parameters(_time_step)
 
-    self.record_parameters(_time_step)
+
+    elif self.record_mode == "KEYFRAMES" and \
+         self.sf_trigger_key.value == True and \
+         time.time() - self.last_keyframe_time > 2.0:
+      
+      print "Capture keyframe"
+      _time_step = time.time() - self.recorder_start_time
+      self.record_parameters(_time_step)
+      self.last_keyframe_time = time.time()
+
 
 
   def player_callback(self): # evaluated every frame when active
@@ -200,6 +217,11 @@ class RecorderPlayer(avango.script.Script):
     self.recording_list = [] # clear list
 
     self.recorder_start_time = time.time()
+    self.last_keyframe_time = time.time()
+
+    if self.record_mode == "KEYFRAMES":
+      _time_step = time.time() - self.recorder_start_time
+      self.record_parameters(_time_step)
 
     self.recorder_trigger.Active.value = True # activate recorder callback
 
@@ -210,6 +232,9 @@ class RecorderPlayer(avango.script.Script):
       print_message("Stop recording of " + str(len(self.recording_list)) + " control points.")
 
       self.recorder_trigger.Active.value = False # deactivate recorder callback
+
+      self.recorder_start_time = None
+      self.last_keyframe_time = None
 
 
   def save_recording(self):
@@ -342,6 +367,7 @@ class AnimationManager(avango.script.Script):
   sf_play = avango.SFBool()
   sf_next = avango.SFBool()
   sf_prior = avango.SFBool()
+  sf_trigger = avango.SFBool()
 
   def __init__(self):
     self.super(AnimationManager).__init__()
@@ -363,8 +389,10 @@ class AnimationManager(avango.script.Script):
     self.sf_record.connect_from(self.keyboard_sensor.Button24) # F6
     self.sf_save.connect_from(self.keyboard_sensor.Button25) # F7
 
+    self.sf_trigger.connect_from(self.keyboard_sensor.Button20) # F2
+
     self.path_recorder_player = RecorderPlayer()
-    self.path_recorder_player.my_constructor(SCENEGRAPH_NODE_LIST[0], self.sf_record, self.sf_save, NAVIGATION_LIST[0])
+    self.path_recorder_player.my_constructor(SCENEGRAPH_NODE_LIST[0], self.sf_record, self.sf_save, self.sf_trigger, NAVIGATION_LIST[0])
 
     self.always_evaluate(True)
 
