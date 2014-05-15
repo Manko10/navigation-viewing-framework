@@ -342,7 +342,6 @@ class AnimationManager(avango.script.Script):
 
   # constructor
   def my_constructor(self, SCENEGRAPH_NODE_LIST):
-    self.super(AnimationManager).__init__()
 
     # variables
     self.input_list = []
