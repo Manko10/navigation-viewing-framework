@@ -351,7 +351,7 @@ class KeyboardMouseDevice(MultiDofDevice):
     self.add_input_binding("self.set_z(self.keyboard_sensor.Button1.value*-1.0)")            # W
     self.add_input_binding("self.set_z(self.keyboard_sensor.Button11.value)")                # S
     self.add_input_binding("self.set_reset_trigger(self.keyboard_sensor.Button3.value)")     # R
-    self.add_input_binding("self.set_coupling_trigger(self.keyboard_sensor.Button21.value)") # C
+    self.add_input_binding("self.set_coupling_trigger(self.keyboard_sensor.Button15.value)") # H
     self.add_input_binding("self.set_dof_trigger(self.keyboard_sensor.Button14.value)")      # G
     self.add_input_binding("self.set_rx(self.mouse_sensor.Value1.value*-1.0)")               # mouse up
     self.add_input_binding("self.set_ry(self.mouse_sensor.Value0.value*-1.0)")               # mouse right

@@ -205,6 +205,9 @@ class RecorderPlayer(avango.script.Script):
 
     for _entry in _entries:
 
+      if _entry.endswith("~"):
+        continue
+
       _path = "path_recordings/{0}".format(_entry)
 
       self.load_path_from_file(_path)
@@ -227,6 +230,14 @@ class RecorderPlayer(avango.script.Script):
       print_error("Error while loading path description file.", True)
 
     else: # file succesfully loaded
+
+      # check if the recording is for handled scenegraph node
+      if _lines[0].replace("\n", "") != self.SCENEGRAPH_NODE.Path.value:
+        #print_warning("Return at " + _lines[0].replace("\n", ""))
+        return
+      
+      # remove scenegraph path from list to parse
+      _lines.pop(0)
 
       _recording_list = []
 
@@ -286,10 +297,15 @@ class RecorderPlayer(avango.script.Script):
 
     self.recording_index = len(self.recordings_list)
 
-    _name = "path_recordings/path_" + str(self.recording_index)
+    _path = self.SCENEGRAPH_NODE.Path.value
+    _path = _path.replace("/", "-")
+
+    _name = "path_recordings/" + _path +"_path_" + str(self.recording_index)
     _file = open(_name,"w")
 
     _recording_list = []
+
+    _file.write(self.SCENEGRAPH_NODE.Path.value + "\n")
 
     for _tupel in self.recording_list:
       _recording_list.append(_tupel)
@@ -458,14 +474,18 @@ class AnimationManager(avango.script.Script):
     self.sf_play_mode_change.connect_from(self.keyboard_sensor.Button28) # F10
     self.sf_record_mode_change.connect_from(self.keyboard_sensor.Button29) # F11
 
-    self.path_recorder_player = RecorderPlayer()
-    self.path_recorder_player.my_constructor(SCENEGRAPH_NODE_LIST[0]
-                                           , NAVIGATION_LIST[0]
-                                           , self.sf_record
-                                           , self.sf_save
-                                           , self.sf_trigger
-                                           , self.sf_play_mode_change
-                                           , self.sf_record_mode_change)
+    self.path_recorder_players = []
+
+    for _i in range(len(SCENEGRAPH_NODE_LIST)):
+      _path_recorder_player = RecorderPlayer()
+      _path_recorder_player.my_constructor(SCENEGRAPH_NODE_LIST[_i]
+                                             , NAVIGATION_LIST[_i]
+                                             , self.sf_record
+                                             , self.sf_save
+                                             , self.sf_trigger
+                                             , self.sf_play_mode_change
+                                             , self.sf_record_mode_change)
+      self.path_recorder_players.append(_path_recorder_player)
 
     self.always_evaluate(True)
 
@@ -482,7 +502,7 @@ class AnimationManager(avango.script.Script):
 
     if self.sf_next.value == True: # button pressed
 
-      self.path_recorder_player.next_recording()
+      self.path_recorder_players[0].next_recording()
       self.play_key()
 
   @field_has_changed(sf_prior)
@@ -490,15 +510,11 @@ class AnimationManager(avango.script.Script):
 
     if self.sf_prior.value == True: # button pressed
 
-      self.path_recorder_player.prior_recording()
+      self.path_recorder_players[0].prior_recording()
       self.play_key()
 
 
   # functions
   def play_key(self):
 
-    self.path_recorder_player.play_key()
-
-  ## Evaluated every frame.
-  def evaluate(self):
-    pass
+    self.path_recorder_players[0].play_key()
