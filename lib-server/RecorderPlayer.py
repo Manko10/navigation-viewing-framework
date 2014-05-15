@@ -367,15 +367,15 @@ class AnimationManager(avango.script.Script):
         
     # init field connections
 
-    self.sf_play.connect_from(self.keyboard_sensor.Button19) # Y
-    self.sf_auto_animation.connect_from(self.keyboard_sensor.Button20) # X
-    self.sf_roll_removal.connect_from(self.keyboard_sensor.Button21) # C    
+    self.sf_play.connect_from(self.keyboard_sensor.Button19) # F1
+    self.sf_auto_animation.connect_from(self.keyboard_sensor.Button20) # F2
+    self.sf_roll_removal.connect_from(self.keyboard_sensor.Button21) # F3    
     
-    self.sf_next.connect_from(self.keyboard_sensor.Button22) # V
-    self.sf_prior.connect_from(self.keyboard_sensor.Button23) # B
+    self.sf_next.connect_from(self.keyboard_sensor.Button22) # F4
+    self.sf_prior.connect_from(self.keyboard_sensor.Button23) # F5
 
-    self.sf_record.connect_from(self.keyboard_sensor.Button24) # N
-    self.sf_save.connect_from(self.keyboard_sensor.Button25) # M
+    self.sf_record.connect_from(self.keyboard_sensor.Button24) # F6
+    self.sf_save.connect_from(self.keyboard_sensor.Button25) # F7
 
     self.path_recorder_player = RecorderPlayer()
     self.path_recorder_player.my_constructor(SCENEGRAPH_NODE_LIST[0], self.sf_record, self.sf_save)
@@ -451,7 +451,6 @@ class AnimationManager(avango.script.Script):
 
 
   def evaluate(self):
-    pass
     '''
     if self.auto_animation_flag == True:
 
@@ -466,19 +465,17 @@ class AnimationManager(avango.script.Script):
         #if _input_mat != avango.gua.make_identity_mat() and self.path_recorder_player.player_trigger.Active.value == True: # disable auto animation
         #  #print "stop auto animation"
         #  self.play_key()
+    '''
 
     if self.enable_flag == True:
 
       if (time.time() - self.last_input_time) > self.auto_animation_threshold and self.path_recorder_player.player_trigger.Active.value == False: # enable auto animation
-        #print "start auto animation"
         self.play_key()
 
-    else:
+    #else:
 
-      if _input_mat != avango.gua.make_identity_mat() and self.path_recorder_player.player_trigger.Active.value == True: # disable auto animation
-        #print "stop auto animation"
-        self.play_key()
-    '''
+      #if _input_mat != avango.gua.make_identity_mat() and self.path_recorder_player.player_trigger.Active.value == True: # disable auto animation
+        #self.play_key()
 
 
   def filter_channel(self, VALUE, OFFSET, MIN, MAX, NEG_THRESHOLD, POS_THRESHOLD):
