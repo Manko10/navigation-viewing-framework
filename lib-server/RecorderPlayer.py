@@ -170,7 +170,7 @@ class RecorderPlayer(avango.script.Script):
     except IOError:
       print "error while loading scene description file"
 
-    else: # file succesfull loaded
+    else: # file succesfully loaded
 
       _recording_list = []
 
@@ -204,7 +204,7 @@ class RecorderPlayer(avango.script.Script):
   def stop_recorder(self):
 
     if self.recorder_trigger.Active.value == True:
-      # print "STOP RECORDING", len(self.recording_list)
+      print "STOP RECORDING", len(self.recording_list)
 
       self.recorder_trigger.Active.value = False # deactivate recorder callback
 
@@ -336,8 +336,6 @@ class AnimationManager(avango.script.Script):
   sf_play = avango.SFBool()
   sf_next = avango.SFBool()
   sf_prior = avango.SFBool()
-  sf_auto_animation = avango.SFBool()
-  sf_roll_removal = avango.SFBool()
 
   def __init__(self):
     self.super(AnimationManager).__init__()
@@ -354,7 +352,6 @@ class AnimationManager(avango.script.Script):
     self.auto_animation_flag = False
     self.roll_removal_flag = True
 
-    self.last_input_time = 0.0
     self.lf_time = time.time()
     self.global_scale = 1.0 # (inside/outside plane)
     
@@ -367,9 +364,7 @@ class AnimationManager(avango.script.Script):
         
     # init field connections
 
-    self.sf_play.connect_from(self.keyboard_sensor.Button19) # F1
-    self.sf_auto_animation.connect_from(self.keyboard_sensor.Button20) # F2
-    self.sf_roll_removal.connect_from(self.keyboard_sensor.Button21) # F3    
+    self.sf_play.connect_from(self.keyboard_sensor.Button21) # F3
     
     self.sf_next.connect_from(self.keyboard_sensor.Button22) # F4
     self.sf_prior.connect_from(self.keyboard_sensor.Button23) # F5
@@ -386,8 +381,10 @@ class AnimationManager(avango.script.Script):
   @field_has_changed(sf_play)
   def sf_play_changed(self):
 
-    if self.sf_play.value == True: # button pressed
+    print "play key", self.sf_play.value
 
+    if self.sf_play.value == True: # button pressed
+      
       self.play_key()
 
 
@@ -409,8 +406,6 @@ class AnimationManager(avango.script.Script):
 
       self.path_recorder_player.next_recording()
 
-      self.last_input_time = time.time()
-
       self.enable_flag = True
 
 
@@ -421,61 +416,11 @@ class AnimationManager(avango.script.Script):
 
       self.path_recorder_player.prior_recording()
 
-      self.last_input_time = time.time()
-
       self.enable_flag = True
 
 
-  @field_has_changed(sf_auto_animation)
-  def sf_auto_animation_changed(self):
-      
-    if self.sf_auto_animation.value == True: # button pressed
-
-      self.auto_animation_flag = not self.auto_animation_flag
-
-      print "auto-animation enabled: ", self.roll_removal_flag
-
-      if self.auto_animation_flag == False and self.path_recorder_player.player_trigger.Active.value == True: # disable auto animation
-        print "stop auto animation"
-        self.play_key()
-
-
-  @field_has_changed(sf_roll_removal)
-  def sf_roll_removal_changed(self):
-      
-    if self.sf_roll_removal.value == True: # button pressed
-
-      self.roll_removal_flag = not self.roll_removal_flag
-      
-      print "roll disabled: ", self.roll_removal_flag
-
-
   def evaluate(self):
-    '''
-    if self.auto_animation_flag == True:
-
-      if self.enable_flag == True:
-
-        if (time.time() - self.last_input_time) > self.auto_animation_threshold and self.path_recorder_player.player_trigger.Active.value == False: # enable auto animation
-          #print "start auto animation"
-          self.play_key()
-                                            
-      else:
-        pass
-        #if _input_mat != avango.gua.make_identity_mat() and self.path_recorder_player.player_trigger.Active.value == True: # disable auto animation
-        #  #print "stop auto animation"
-        #  self.play_key()
-    '''
-
-    if self.enable_flag == True:
-
-      if (time.time() - self.last_input_time) > self.auto_animation_threshold and self.path_recorder_player.player_trigger.Active.value == False: # enable auto animation
-        self.play_key()
-
-    #else:
-
-      #if _input_mat != avango.gua.make_identity_mat() and self.path_recorder_player.player_trigger.Active.value == True: # disable auto animation
-        #self.play_key()
+    pass
 
 
   def filter_channel(self, VALUE, OFFSET, MIN, MAX, NEG_THRESHOLD, POS_THRESHOLD):
@@ -508,11 +453,6 @@ class AnimationManager(avango.script.Script):
     return VALUE
 
 
-  def set_start_mat(self, MATRIX):
-
-    self.OutTransform.value = MATRIX
-
-
   def play_key(self):
 
     self.path_recorder_player.play_key()
@@ -522,8 +462,6 @@ class AnimationManager(avango.script.Script):
 
     else:
       self.enable_flag = True
-
-      self.last_input_time = time.time()
       
   
   def get_euler_angles(self, MATRIX):
@@ -561,4 +499,3 @@ class AnimationManager(avango.script.Script):
       head += 2.0 * math.pi
     
     return [head, pitch, roll]
-
