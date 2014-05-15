@@ -324,10 +324,10 @@ def init_keyboard():
     keyboard.buttons[24] = "EV_KEY::KEY_F6"
     keyboard.buttons[25] = "EV_KEY::KEY_F7"
 
-    keyboard.buttons[26] = "EV_KEY::KEY_1"
-    keyboard.buttons[27] = "EV_KEY::KEY_2"
-    keyboard.buttons[28] = "EV_KEY::KEY_3"
-    keyboard.buttons[29] = "EV_KEY::KEY_6"
+    keyboard.buttons[26] = "EV_KEY::KEY_F8"
+    keyboard.buttons[27] = "EV_KEY::KEY_F9"
+    keyboard.buttons[28] = "EV_KEY::KEY_F10"
+    keyboard.buttons[29] = "EV_KEY::KEY_F11"
 
     keyboard.buttons[30] = "EV_KEY::KEY_UP"
     keyboard.buttons[31] = "EV_KEY::KEY_DOWN"  

@@ -24,13 +24,22 @@ class RecorderPlayer(avango.script.Script):
   sf_record_key = avango.SFBool()
   sf_save_key = avango.SFBool()
   sf_trigger_key = avango.SFBool()
+  sf_play_mode_key = avango.SFBool()
+  sf_record_mode_key = avango.SFBool()
 
   # constructor
   def __init__(self):
     self.super(RecorderPlayer).__init__()
 
   # constructor
-  def my_constructor(self, SCENEGRAPH_NODE, SF_RECORD_KEY, SF_SAVE_KEY, SF_TRIGGER_KEY, NAVIGATION = None):
+  def my_constructor(self
+                   , SCENEGRAPH_NODE
+                   , NAVIGATION
+                   , SF_RECORD_KEY
+                   , SF_SAVE_KEY
+                   , SF_TRIGGER_KEY
+                   , SF_PLAY_MODE_CHANGE
+                   , SF_RECORD_MODE_CHANGE):
 
     # references
     self.SCENEGRAPH_NODE = SCENEGRAPH_NODE
@@ -47,11 +56,11 @@ class RecorderPlayer(avango.script.Script):
     self.play_reset_flag = False
     self.recording_index = None
 
-    #self.record_mode = "ALL_FRAMES"
-    self.record_mode = "KEYFRAMES"
+    self.record_mode = "ALL_FRAMES"
+    #self.record_mode = "KEYFRAMES"
 
-    #self.play_mode = "CONTINUOUS"
-    self.play_mode = "DISCRETE"
+    self.play_mode = "CONTINUOUS"
+    #self.play_mode = "DISCRETE"
 
     # init frame callbacks
     self.recorder_trigger = avango.script.nodes.Update(Callback = self.recorder_callback, Active = False)
@@ -63,6 +72,8 @@ class RecorderPlayer(avango.script.Script):
     self.sf_record_key.connect_from(SF_RECORD_KEY)
     self.sf_save_key.connect_from(SF_SAVE_KEY)
     self.sf_trigger_key.connect_from(SF_TRIGGER_KEY)
+    self.sf_play_mode_key.connect_from(SF_PLAY_MODE_CHANGE)
+    self.sf_record_mode_key.connect_from(SF_RECORD_MODE_CHANGE)
 
 
   # callbacks
@@ -98,6 +109,30 @@ class RecorderPlayer(avango.script.Script):
 
     elif self.sf_trigger_key.value == True:
       self.trigger_next_keyframe = True
+
+  @field_has_changed(sf_play_mode_key)
+  def sf_play_mode_key_changed(self):
+    
+    if self.sf_play_mode_key.value == True:
+
+      if self.play_mode == "CONTINUOUS":
+        self.play_mode = "DISCRETE"
+        print_message("Play mode switched to DISCRETE.")
+      else:
+        self.play_mode = "CONTINUOUS"
+        print_message("Play mode switched to CONTINUOUS.")
+
+  @field_has_changed(sf_record_mode_key)
+  def sf_record_mode_key_changed(self):
+    
+    if self.sf_record_mode_key.value == True:
+
+      if self.record_mode == "ALL_FRAMES":
+        self.record_mode = "KEYFRAMES"
+        print_message("Record mode switched to KEYFRAMES.")
+      else:
+        self.record_mode = "ALL_FRAMES"
+        print_message("Record mode switched to ALL_FRAMES.")
 
 
   def recorder_callback(self): # evaluated every frame when active
@@ -425,6 +460,8 @@ class AnimationManager(avango.script.Script):
   sf_next = avango.SFBool()
   sf_prior = avango.SFBool()
   sf_trigger = avango.SFBool()
+  sf_play_mode_change = avango.SFBool()
+  sf_record_mode_change = avango.SFBool()
 
   def __init__(self):
     self.super(AnimationManager).__init__()
@@ -448,8 +485,17 @@ class AnimationManager(avango.script.Script):
 
     self.sf_trigger.connect_from(self.keyboard_sensor.Button20) # F2
 
+    self.sf_play_mode_change.connect_from(self.keyboard_sensor.Button28) # F10
+    self.sf_record_mode_change.connect_from(self.keyboard_sensor.Button29) # F11
+
     self.path_recorder_player = RecorderPlayer()
-    self.path_recorder_player.my_constructor(SCENEGRAPH_NODE_LIST[0], self.sf_record, self.sf_save, self.sf_trigger, NAVIGATION_LIST[0])
+    self.path_recorder_player.my_constructor(SCENEGRAPH_NODE_LIST[0]
+                                           , NAVIGATION_LIST[0]
+                                           , self.sf_record
+                                           , self.sf_save
+                                           , self.sf_trigger
+                                           , self.sf_play_mode_change
+                                           , self.sf_record_mode_change)
 
     self.always_evaluate(True)
 
