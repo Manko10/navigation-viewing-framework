@@ -41,6 +41,7 @@ class RecorderPlayer(avango.script.Script):
     self.recording_list = []
     self.recorder_start_time = None
     self.in_keyframe_recording = False
+    self.trigger_next_keyframe = False
     self.player_start_time = None
     self.play_index = None
     self.play_reset_flag = False
@@ -48,6 +49,9 @@ class RecorderPlayer(avango.script.Script):
 
     #self.record_mode = "ALL_FRAMES"
     self.record_mode = "KEYFRAMES"
+
+    self.play_mode = "CONTINUOUS"
+    #self.play_mode = "DISCRETE"
 
     # init frame callbacks
     self.recorder_trigger = avango.script.nodes.Update(Callback = self.recorder_callback, Active = False)
@@ -92,6 +96,9 @@ class RecorderPlayer(avango.script.Script):
       _time_step = time.time() - self.recorder_start_time
       self.record_parameters(_time_step)
 
+    elif self.sf_trigger_key.value == True:
+      self.trigger_next_keyframe = True
+
 
   def recorder_callback(self): # evaluated every frame when active
 
@@ -99,17 +106,18 @@ class RecorderPlayer(avango.script.Script):
       _time_step = time.time() - self.recorder_start_time
       self.record_parameters(_time_step)
 
+
   def player_callback(self): # evaluated every frame when active
 
-    _time_step = time.time() - self.player_start_time
+    #if self.play_mode == "CONTINUOUS":
+      _time_step = time.time() - self.player_start_time
 
-    self.play(_time_step)
+      self.play(_time_step)
 
-    if self.play_reset_flag == True:
-      self.stop_player()
-      self.next_recording()
-      self.start_player() # restart player
-
+      if self.play_reset_flag == True:
+        self.stop_player()
+        self.next_recording()
+        self.start_player() # restart player
 
   # functions
   def play_key(self):
@@ -316,31 +324,61 @@ class RecorderPlayer(avango.script.Script):
 
     if self.play_index != None:
 
-      _last_recorded_time_step = self.recording_list[-1][0]
+      if self.play_mode == "DISCRETE":
 
-      if TIME_STEP > _last_recorded_time_step:
-        self.play_reset_flag = True # object has finished it's animation
+        if self.trigger_next_keyframe:
+          try:
+            _next_step = self.recording_list[self.play_index]
+          except:
+            self.play_reset_flag = True # object has finished it's animation
+            return
+          
+          _pos = _next_step[1]
+          _quat = _next_step[2]
+
+          _new_mat = avango.gua.make_trans_mat(_pos) * \
+                  avango.gua.make_rot_mat(_quat.get_angle(), _quat.get_axis().x, _quat.get_axis().y, _quat.get_axis().z)
+
+          self.SCENEGRAPH_NODE.Transform.value = _new_mat
+
+          if self.NAVIGATION != None:
+            self.NAVIGATION.inputmapping.set_abs_mat(_new_mat)
+
+          self.play_index += 1
+
+          if self.play_index == 1:
+            self.NAVIGATION.trace.clear(self.NAVIGATION.get_current_world_pos())
+
+          self.trigger_next_keyframe = False
 
       else:
-        _time_step1 = self.recording_list[self.play_index][0]
 
-        if TIME_STEP >= _time_step1:
+        _last_recorded_time_step = self.recording_list[-1][0]
 
-          for _index in range(self.play_index, len(self.recording_list)):
-            _time_step2 = self.recording_list[_index+1][0]
-            _time_step1 = self.recording_list[_index][0]
+        if TIME_STEP > _last_recorded_time_step:
+          self.play_reset_flag = True # object has finished it's animation
 
-            if TIME_STEP <= _time_step2:
-              self.play_index = _index
+        else:
+          _time_step1 = self.recording_list[self.play_index][0]
 
-              _factor = (TIME_STEP - _time_step1) / (_time_step2 - _time_step1)
-              _factor = max(0.0,min(_factor,1.0))
-              self.interpolate_between_frames(_factor) # interpolate position and orientation and scale
+          if TIME_STEP >= _time_step1:
 
-              if self.NAVIGATION != None and TIME_STEP < 0.1:
-                self.NAVIGATION.trace.clear(self.NAVIGATION.get_current_world_pos())
+            for _index in range(self.play_index, len(self.recording_list)):
+              _time_step2 = self.recording_list[_index+1][0]
+              _time_step1 = self.recording_list[_index][0]
 
-              break
+              if TIME_STEP <= _time_step2:
+                self.play_index = _index
+
+                _factor = (TIME_STEP - _time_step1) / (_time_step2 - _time_step1)
+                _factor = max(0.0,min(_factor,1.0))
+
+                self.interpolate_between_frames(_factor) # interpolate position and orientation and scale
+
+                if self.NAVIGATION != None and TIME_STEP < 0.1:
+                  self.NAVIGATION.trace.clear(self.NAVIGATION.get_current_world_pos())
+
+                break
 
 
   def interpolate_between_frames(self, FACTOR):
