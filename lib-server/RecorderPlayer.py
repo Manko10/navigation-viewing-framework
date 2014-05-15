@@ -46,8 +46,8 @@ class RecorderPlayer(avango.script.Script):
     self.play_reset_flag = False
     self.recording_index = None
 
-    #self.record_mode = "ALL_FRAMES"
-    self.record_mode = "KEYFRAMES"
+    self.record_mode = "ALL_FRAMES"
+    #self.record_mode = "KEYFRAMES"
 
     # init frame callbacks
     self.recorder_trigger = avango.script.nodes.Update(Callback = self.recorder_callback, Active = False)
@@ -201,7 +201,9 @@ class RecorderPlayer(avango.script.Script):
         _quat	= avango.gua.make_rot_mat(float(_line[4]), float(_line[5]), float(_line[6]), float(_line[7])).get_rotate()
         #_quat	= avango.gua.Quat(float(_line[4]), avango.gua.Vec3(float(_line[5]), float(_line[6]), float(_line[7]))) # sucks
 
-        _recording_list.append( [_time, _pos, _quat] )
+        _scale = avango.gua.Vec3(float(_line[8]), float(_line[9]), float(_line[10]))
+
+        _recording_list.append( [_time, _pos, _quat, _scale] )
 
       self.recordings_list.append(_recording_list)
 
@@ -257,8 +259,11 @@ class RecorderPlayer(avango.script.Script):
       _time = _tupel[0]
       _pos = _tupel[1]
       _quat = _tupel[2]
+      _scale = _tupel[3]
 
-      _file.write("{0} {1} {2} {3} {4} {5} {6} {7}\n".format(_time, _pos.x, _pos.y, _pos.z, _quat.get_angle(), _quat.get_axis().x, _quat.get_axis().y, _quat.get_axis().z))
+      _file.write("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10}\n".format(
+        _time, _pos.x, _pos.y, _pos.z, _quat.get_angle(), _quat.get_axis().x, _quat.get_axis().y, _quat.get_axis().z, _scale.x, _scale.y, _scale.z
+      ))
 
     _file.close()
 
@@ -269,7 +274,7 @@ class RecorderPlayer(avango.script.Script):
 
     _mat = self.SCENEGRAPH_NODE.Transform.value
 
-    self.recording_list.append( [TIME_STEP, _mat.get_translate(), _mat.get_rotate()] )
+    self.recording_list.append( [TIME_STEP, _mat.get_translate(), _mat.get_rotate(), _mat.get_scale()] )
 
 
   def start_player(self):
@@ -304,9 +309,11 @@ class RecorderPlayer(avango.script.Script):
       _values 	= self.recording_list[0]
       _pos		= _values[1]
       _quat		= _values[2]
+      _scale  = _values[3]
 
-      _mat = avango.gua.make_trans_mat(_pos) * \
-              avango.gua.make_rot_mat(_quat.get_angle(), _quat.get_axis().x, _quat.get_axis().y, _quat.get_axis().z)
+      _mat =  avango.gua.make_trans_mat(_pos) * \
+              avango.gua.make_rot_mat(_quat.get_angle(), _quat.get_axis().x, _quat.get_axis().y, _quat.get_axis().z) * \
+              avango.gua.make_scale_mat(_scale)
 
       self.SCENEGRAPH_NODE.Transform.value = _mat
 
@@ -348,16 +355,20 @@ class RecorderPlayer(avango.script.Script):
     _tupel1 = self.recording_list[self.play_index]
     _pos1 = _tupel1[1]
     _quat1 = _tupel1[2]
+    _scale1 = _tupel1[3]
 
     _tupel2 = self.recording_list[self.play_index+1]
     _pos2	= _tupel2[1]
     _quat2 = _tupel2[2]
+    _scale2 = _tupel2[3]
 
     _new_pos = _pos1.lerp_to(_pos2, FACTOR)
     _new_quat = _quat1.slerp_to(_quat2, FACTOR)
+    _new_scale = _scale1.lerp_to(_scale2, FACTOR)
 
-    _new_mat = avango.gua.make_trans_mat(_new_pos) * \
-                avango.gua.make_rot_mat(_new_quat.get_angle(), _new_quat.get_axis().x, _new_quat.get_axis().y, _new_quat.get_axis().z)
+    _new_mat =  avango.gua.make_trans_mat(_new_pos) * \
+                avango.gua.make_rot_mat(_new_quat.get_angle(), _new_quat.get_axis().x, _new_quat.get_axis().y, _new_quat.get_axis().z) * \
+                avango.gua.make_scale_mat(_new_scale)
 
     self.SCENEGRAPH_NODE.Transform.value = _new_mat
 
