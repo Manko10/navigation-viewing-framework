@@ -502,7 +502,9 @@ class AnimationManager(avango.script.Script):
 
     if self.sf_next.value == True: # button pressed
 
-      self.path_recorder_players[0].next_recording()
+      for _path_recorder_player in self.path_recorder_players:
+        _path_recorder_player.next_recording()
+
       self.play_key()
 
   @field_has_changed(sf_prior)
@@ -510,11 +512,14 @@ class AnimationManager(avango.script.Script):
 
     if self.sf_prior.value == True: # button pressed
 
-      self.path_recorder_players[0].prior_recording()
+      for _path_recorder_player in self.path_recorder_players:
+        _path_recorder_player.prior_recording()
+
       self.play_key()
 
 
   # functions
   def play_key(self):
 
-    self.path_recorder_players[0].play_key()
+    for _path_recorder_player in self.path_recorder_players:
+      _path_recorder_player.play_key()
